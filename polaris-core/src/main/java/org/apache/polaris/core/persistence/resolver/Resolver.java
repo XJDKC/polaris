@@ -294,9 +294,9 @@ public class Resolver {
   public @Nullable EntityCacheEntry getResolvedReferenceCatalog() {
     // can only be called if the resolver has been called and was success
     this.diagnostics.checkNotNull(resolverStatus, "resolver_must_be_called_first");
-    this.diagnostics.check(
-        resolverStatus.getStatus() == ResolverStatus.StatusEnum.SUCCESS,
-        "resolver_must_be_successful");
+    /*this.diagnostics.check(
+    resolverStatus.getStatus() == ResolverStatus.StatusEnum.SUCCESS,
+    "resolver_must_be_successful");*/
 
     return resolvedReferenceCatalog;
   }

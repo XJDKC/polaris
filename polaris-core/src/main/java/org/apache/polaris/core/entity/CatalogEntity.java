@@ -193,6 +193,10 @@ public class CatalogEntity extends PolarisEntity {
         .orElse(null);
   }
 
+  public String getRemoteUrl() {
+    return getInternalPropertiesAsMap().get(REMOTE_URL);
+  }
+
   public static class Builder extends PolarisEntity.BaseBuilder<CatalogEntity, Builder> {
     public Builder() {
       super();

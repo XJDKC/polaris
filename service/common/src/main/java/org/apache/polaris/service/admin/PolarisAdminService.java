@@ -617,8 +617,16 @@ public class PolarisAdminService {
     PolarisAuthorizableOperation op = PolarisAuthorizableOperation.GET_CATALOG;
     authorizeBasicTopLevelEntityOperationOrThrow(op, name, PolarisEntityType.CATALOG);
 
-    return findCatalogByName(name)
-        .orElseThrow(() -> new NotFoundException("Catalog %s not found", name));
+    CatalogEntity rawCatalogEntity =
+        findCatalogByName(name)
+            .orElseThrow(() -> new NotFoundException("Catalog %s not found", name));
+    if (rawCatalogEntity.getPropertiesAsMap().containsKey("credential")) {
+      rawCatalogEntity =
+          new CatalogEntity.Builder(rawCatalogEntity)
+              .addProperty("credential", "<redacted>")
+              .build();
+    }
+    return rawCatalogEntity;
   }
 
   /**
