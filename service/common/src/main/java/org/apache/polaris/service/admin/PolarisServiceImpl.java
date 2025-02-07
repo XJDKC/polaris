@@ -125,6 +125,9 @@ public class PolarisServiceImpl
     Catalog newCatalog =
         new CatalogEntity(adminService.createCatalog(CatalogEntity.fromCatalog(catalog)))
             .asCatalog();
+    if (newCatalog.getProperties().containsKey("credential")) {
+      newCatalog.getProperties().put("credential", "<redacted>");
+    }
     LOGGER.info("Created new catalog {}", newCatalog);
     return Response.status(Response.Status.CREATED).build();
   }
