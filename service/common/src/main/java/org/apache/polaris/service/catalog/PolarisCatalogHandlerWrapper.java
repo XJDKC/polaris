@@ -19,6 +19,7 @@
 package org.apache.polaris.service.catalog;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import jakarta.ws.rs.core.SecurityContext;
 import java.io.Closeable;
@@ -45,6 +46,7 @@ import org.apache.iceberg.TableOperations;
 import org.apache.iceberg.UpdateRequirement;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.Namespace;
+import org.apache.iceberg.catalog.SessionCatalog;
 import org.apache.iceberg.catalog.SupportsNamespaces;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.catalog.ViewCatalog;
@@ -56,6 +58,9 @@ import org.apache.iceberg.exceptions.NoSuchNamespaceException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.exceptions.NoSuchViewException;
 import org.apache.iceberg.rest.CatalogHandlers;
+import org.apache.iceberg.rest.HTTPClient;
+import org.apache.iceberg.rest.RESTCatalog;
+import org.apache.iceberg.rest.auth.OAuth2Properties;
 import org.apache.iceberg.rest.requests.CommitTransactionRequest;
 import org.apache.iceberg.rest.requests.CreateNamespaceRequest;
 import org.apache.iceberg.rest.requests.CreateTableRequest;
@@ -179,9 +184,45 @@ public class PolarisCatalogHandlerWrapper {
   }
 
   private void initializeCatalog() {
-    this.baseCatalog =
-        catalogFactory.createCallContextCatalog(
-            callContext, authenticatedPrincipal, securityContext, resolutionManifest);
+    CatalogEntity resolvedCatalogEntity =
+        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
+    if (resolvedCatalogEntity.getConnectionRemoteUri() != null) {
+      LOGGER
+          .atInfo()
+          .addKeyValue("remoteUrl", resolvedCatalogEntity.getConnectionRemoteUri())
+          .log("Initializing federated catalog");
+
+      SessionCatalog.SessionContext context = SessionCatalog.SessionContext.createEmpty();
+      RESTCatalog restCatalog =
+          new RESTCatalog(
+              context,
+              (config) ->
+                  HTTPClient.builder(config)
+                      .uri(config.get(org.apache.iceberg.CatalogProperties.URI))
+                      .build());
+
+      ImmutableMap.Builder<String, String> propertiesBuilder =
+          ImmutableMap.<String, String>builder()
+              .put(
+                  org.apache.iceberg.CatalogProperties.URI,
+                  resolvedCatalogEntity.getConnectionRemoteUri())
+              .put(
+                  OAuth2Properties.CREDENTIAL,
+                  resolvedCatalogEntity.getConnectionClientId()
+                      + ":"
+                      + resolvedCatalogEntity.getConnectionClientSecret())
+              .put(OAuth2Properties.SCOPE, resolvedCatalogEntity.getConnectionScopes())
+              .put("warehouse", resolvedCatalogEntity.getConnectionCatalogName());
+
+      restCatalog.initialize(
+          resolvedCatalogEntity.getConnectionCatalogName(), propertiesBuilder.buildKeepingLast());
+      this.baseCatalog = restCatalog;
+    } else {
+      LOGGER.atInfo().log("Initializing non-federated catalog");
+      this.baseCatalog =
+          catalogFactory.createCallContextCatalog(
+              callContext, authenticatedPrincipal, securityContext, resolutionManifest);
+    }
     this.namespaceCatalog =
         (baseCatalog instanceof SupportsNamespaces) ? (SupportsNamespaces) baseCatalog : null;
     this.viewCatalog = (baseCatalog instanceof ViewCatalog) ? (ViewCatalog) baseCatalog : null;
@@ -222,6 +263,9 @@ public class PolarisCatalogHandlerWrapper {
       }
     }
     resolutionManifest.resolveAll();
+
+    CatalogEntity resolvedCatalogEntity =
+        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target = resolutionManifest.getResolvedPath(namespace, true);
     if (target == null) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", namespace);
@@ -255,6 +299,9 @@ public class PolarisCatalogHandlerWrapper {
             Arrays.asList(namespace.levels()), PolarisEntityType.NAMESPACE, true /* optional */),
         namespace);
     resolutionManifest.resolveAll();
+
+    CatalogEntity resolvedCatalogEntity =
+        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target = resolutionManifest.getResolvedPath(parentNamespace, true);
     if (target == null) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", parentNamespace);
@@ -292,6 +339,9 @@ public class PolarisCatalogHandlerWrapper {
             true /* optional */),
         identifier);
     resolutionManifest.resolveAll();
+
+    CatalogEntity resolvedCatalogEntity =
+        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target = resolutionManifest.getResolvedPath(namespace, true);
     if (target == null) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", namespace);
@@ -319,6 +369,9 @@ public class PolarisCatalogHandlerWrapper {
             true /* optional */),
         identifier);
     resolutionManifest.resolveAll();
+
+    CatalogEntity resolvedCatalogEntity =
+        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target =
         resolutionManifest.getResolvedPath(identifier, subType, true);
     if (target == null) {
@@ -354,6 +407,8 @@ public class PolarisCatalogHandlerWrapper {
 
     ResolverStatus status = resolutionManifest.resolveAll();
 
+    CatalogEntity resolvedCatalogEntity =
+        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     // If one of the paths failed to resolve, throw exception based on the one that
     // we first failed to resolve.
     if (status.getStatus() == ResolverStatus.StatusEnum.PATH_COULD_NOT_BE_FULLY_RESOLVED) {
@@ -413,6 +468,9 @@ public class PolarisCatalogHandlerWrapper {
             true /* optional */),
         dst);
     ResolverStatus status = resolutionManifest.resolveAll();
+
+    CatalogEntity resolvedCatalogEntity =
+        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     if (status.getStatus() == ResolverStatus.StatusEnum.PATH_COULD_NOT_BE_FULLY_RESOLVED
         && status.getFailedToResolvePath().getLastEntityType() == PolarisEntityType.NAMESPACE) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", dst.namespace());
@@ -495,9 +553,10 @@ public class PolarisCatalogHandlerWrapper {
     }
   }
 
-  private static boolean isExternal(CatalogEntity catalog) {
+  private static boolean isStaticFacade(CatalogEntity catalog) {
     return org.apache.polaris.core.admin.model.Catalog.TypeEnum.EXTERNAL.equals(
-        catalog.getCatalogType());
+            catalog.getCatalogType())
+        && !catalog.isPassthroughFacade();
   }
 
   private void doCatalogOperation(Runnable handler) {
@@ -582,8 +641,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot create table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot create table on static-facade external catalogs.");
     }
     return doCatalogOperation(() -> CatalogHandlers.createTable(baseCatalog, namespace, request));
   }
@@ -601,8 +660,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot create table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot create table on static-facade external catalogs.");
     }
     return doCatalogOperation(
         () -> {
@@ -710,8 +769,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot create table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot create table on static-facade external catalogs.");
     }
     return doCatalogOperation(
         () -> {
@@ -733,8 +792,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot create table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot create table on static-facade external catalogs.");
     }
     return doCatalogOperation(
         () -> {
@@ -920,8 +979,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot update table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot update table on static-facade external catalogs.");
     }
     return doCatalogOperation(
         () ->
@@ -939,8 +998,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot update table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot update table on static-facade external catalogs.");
     }
     return doCatalogOperation(
         () ->
@@ -964,8 +1023,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot drop table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot drop table on static-facade external catalogs.");
     }
     doCatalogOperation(() -> CatalogHandlers.purgeTable(baseCatalog, tableIdentifier));
   }
@@ -989,8 +1048,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot rename table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot rename table on static-facade external catalogs.");
     }
     doCatalogOperation(() -> CatalogHandlers.renameTable(baseCatalog, request));
   }
@@ -1013,8 +1072,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot update table on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot update table on static-facade external catalogs.");
     }
 
     if (!(baseCatalog instanceof BasePolarisCatalog)) {
@@ -1120,8 +1179,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot create view on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot create view on static-facade external catalogs.");
     }
     return doCatalogOperation(() -> CatalogHandlers.createView(viewCatalog, namespace, request));
   }
@@ -1143,8 +1202,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot replace view on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot replace view on static-facade external catalogs.");
     }
     return doCatalogOperation(
         () -> CatalogHandlers.updateView(viewCatalog, viewIdentifier, applyUpdateFilters(request)));
@@ -1176,8 +1235,8 @@ public class PolarisCatalogHandlerWrapper {
                 .getResolvedReferenceCatalogEntity()
                 .getResolvedLeafEntity()
                 .getEntity());
-    if (isExternal(catalog)) {
-      throw new BadRequestException("Cannot rename view on external catalogs.");
+    if (isStaticFacade(catalog)) {
+      throw new BadRequestException("Cannot rename view on static-facade external catalogs.");
     }
     doCatalogOperation(() -> CatalogHandlers.renameView(viewCatalog, request));
   }
