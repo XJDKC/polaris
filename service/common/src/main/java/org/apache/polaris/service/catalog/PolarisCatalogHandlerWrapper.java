@@ -206,9 +206,9 @@ public class PolarisCatalogHandlerWrapper {
               .put(org.apache.iceberg.CatalogProperties.URI, resolvedCatalogEntity.getRemoteUrl())
               .put(
                   OAuth2Properties.CREDENTIAL,
-                  resolvedCatalogEntity.getPropertiesAsMap().get("credential"))
-              .put(OAuth2Properties.SCOPE, resolvedCatalogEntity.getPropertiesAsMap().get("scope"))
-              .put("warehouse", resolvedCatalogEntity.getPropertiesAsMap().get("catalog-name"));
+                  resolvedCatalogEntity.getInternalPropertiesAsMap().get("credential"))
+              .put(OAuth2Properties.SCOPE, resolvedCatalogEntity.getInternalPropertiesAsMap().get("scope"))
+              .put("warehouse", resolvedCatalogEntity.getInternalPropertiesAsMap().get("catalog-name"));
 
       restCatalog.initialize(
           resolvedCatalogEntity.getPropertiesAsMap().get("catalog-name"),
