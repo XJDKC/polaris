@@ -196,7 +196,6 @@ public class PolarisApplicationIntegrationTest {
                 .setStorageConfigInfo(storageConfig)
                 .build()
             : ExternalCatalog.builder()
-                .setRemoteUrl("http://faraway.com")
                 .setName(catalogName)
                 .setType(catalogType)
                 .setProperties(props)
