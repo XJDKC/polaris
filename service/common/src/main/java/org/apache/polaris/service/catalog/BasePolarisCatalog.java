@@ -820,28 +820,12 @@ public class BasePolarisCatalog extends BaseMetastoreViewCatalog
         PolarisEntitySubType.TABLE, identifier, notificationRequest);
   }
 
-  @Override
-  public Map<String, String> getCredentialConfig(
+  private Map<String, String> patchClientRegionIfNeeded(
       TableIdentifier tableIdentifier,
-      TableMetadata tableMetadata,
-      Set<PolarisStorageActions> storageActions) {
-    Optional<PolarisEntity> storageInfo = findStorageInfo(tableIdentifier);
-    if (storageInfo.isEmpty()) {
-      LOGGER
-          .atWarn()
-          .addKeyValue("tableIdentifier", tableIdentifier)
-          .log("Table entity has no storage configuration in its hierarchy");
-      return Map.of();
-    }
-    Map<String, String> returnedCreds =
-        refreshCredentials(
-            tableIdentifier,
-            storageActions,
-            getLocationsAllowedToBeAccessed(tableMetadata),
-            storageInfo.get());
-
+      Map<String, String> returnedCreds,
+      Optional<PolarisEntity> storageInfo) {
     // SNOW-1926859 - Temporarily patch CLIENT_REGION if it's not set by the underlying
-    // integration.
+    // integration. Remove this entire method and all calls to it once fixed.
     CatalogEntity castedEntity = CatalogEntity.of(storageInfo.get());
     if (returnedCreds != null && castedEntity != null) {
       PolarisStorageConfigurationInfo storageConfigurationInfo =
@@ -867,6 +851,29 @@ public class BasePolarisCatalog extends BaseMetastoreViewCatalog
         }
       }
     }
+    return returnedCreds;
+  }
+
+  @Override
+  public Map<String, String> getCredentialConfig(
+      TableIdentifier tableIdentifier,
+      TableMetadata tableMetadata,
+      Set<PolarisStorageActions> storageActions) {
+    Optional<PolarisEntity> storageInfo = findStorageInfo(tableIdentifier);
+    if (storageInfo.isEmpty()) {
+      LOGGER
+          .atWarn()
+          .addKeyValue("tableIdentifier", tableIdentifier)
+          .log("Table entity has no storage configuration in its hierarchy");
+      return Map.of();
+    }
+    Map<String, String> returnedCreds =
+        refreshCredentials(
+            tableIdentifier,
+            storageActions,
+            getLocationsAllowedToBeAccessed(tableMetadata),
+            storageInfo.get());
+    returnedCreds = patchClientRegionIfNeeded(tableIdentifier, returnedCreds, storageInfo);
     return returnedCreds;
   }
 
@@ -1653,6 +1660,7 @@ public class BasePolarisCatalog extends BaseMetastoreViewCatalog
                 storageInfo ->
                     refreshCredentials(identifier, storageActions, readLocations, storageInfo))
             .orElse(Map.of());
+    credentialsMap = patchClientRegionIfNeeded(identifier, credentialsMap, storageInfoEntity);
 
     // Update the FileIO before we write the new metadata file
     // update with table properties in case there are table-level overrides
