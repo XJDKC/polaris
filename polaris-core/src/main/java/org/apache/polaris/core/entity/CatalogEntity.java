@@ -39,6 +39,10 @@ import org.apache.polaris.core.admin.model.FileStorageConfigInfo;
 import org.apache.polaris.core.admin.model.GcpStorageConfigInfo;
 import org.apache.polaris.core.admin.model.PolarisCatalog;
 import org.apache.polaris.core.admin.model.StorageConfigInfo;
+import org.apache.polaris.core.connection.ConnectionType;
+import org.apache.polaris.core.connection.IcebergRestConnectionConfigurationInfo;
+import org.apache.polaris.core.connection.PolarisConnectionConfigurationInfo;
+import org.apache.polaris.core.connection.PolarisRestAuthenticationInfo;
 import org.apache.polaris.core.storage.FileStorageConfigurationInfo;
 import org.apache.polaris.core.storage.PolarisStorageConfigurationInfo;
 import org.apache.polaris.core.storage.aws.AwsStorageConfigurationInfo;
@@ -94,6 +98,9 @@ public class CatalogEntity extends PolarisEntity {
     builder.setInternalProperties(internalProperties);
     builder.setStorageConfigurationInfo(
         catalog.getStorageConfigInfo(), getDefaultBaseLocation(catalog));
+    if (catalog instanceof ExternalCatalog) {
+      builder.setConnectionConfigurationInfo(((ExternalCatalog) catalog).getConnectionConfigInfo());
+    }
     return builder.build();
   }
 
@@ -126,6 +133,7 @@ public class CatalogEntity extends PolarisEntity {
             .setLastUpdateTimestamp(getLastUpdateTimestamp())
             .setEntityVersion(getEntityVersion())
             .setStorageConfigInfo(getStorageInfo(internalProperties))
+            .setConnectionConfigInfo(getConnectionInfo(internalProperties))
             .build();
   }
 
@@ -171,6 +179,15 @@ public class CatalogEntity extends PolarisEntity {
     return null;
   }
 
+  private ConnectionConfigInfo getConnectionInfo(Map<String, String> internalProperties) {
+    if (internalProperties.containsKey(
+        PolarisEntityConstants.getConnectionConfigInfoPropertyName())) {
+      PolarisConnectionConfigurationInfo configInfo = getConnectionConfigurationInfo();
+      return configInfo.asConnectionConfigInfoModel();
+    }
+    return null;
+  }
+
   public String getDefaultBaseLocation() {
     return getPropertiesAsMap().get(DEFAULT_BASE_LOCATION_KEY);
   }
@@ -196,9 +213,19 @@ public class CatalogEntity extends PolarisEntity {
   }
 
   public boolean isPassthroughFacade() {
-    // TODO: Refactor this to use new ConnectionConfigurationInfo
-    String remoteUri = getPropertiesAsMap().get(CONNECTION_REMOTE_URI_KEY);
-    return remoteUri != null && !remoteUri.isEmpty();
+    return getInternalPropertiesAsMap()
+        .containsKey(PolarisEntityConstants.getConnectionConfigInfoPropertyName());
+  }
+
+  public PolarisConnectionConfigurationInfo getConnectionConfigurationInfo() {
+    String configStr =
+        getInternalPropertiesAsMap()
+            .get(PolarisEntityConstants.getConnectionConfigInfoPropertyName());
+    if (configStr != null) {
+      return PolarisConnectionConfigurationInfo.deserialize(
+          new PolarisDefaultDiagServiceImpl(), configStr);
+    }
+    return null;
   }
 
   public String getConnectionRemoteUri() {
@@ -308,6 +335,34 @@ public class CatalogEntity extends PolarisEntity {
         }
         internalProperties.put(
             PolarisEntityConstants.getStorageConfigInfoPropertyName(), config.serialize());
+      }
+      return this;
+    }
+
+    public Builder setConnectionConfigurationInfo(
+        ConnectionConfigInfo connectionConfigurationModel) {
+      if (connectionConfigurationModel != null) {
+        PolarisConnectionConfigurationInfo config;
+        switch (connectionConfigurationModel.getConnectionType()) {
+          case ICEBERG_REST:
+            IcebergRestConnectionConfigInfo icebergRestConfigModel =
+                (IcebergRestConnectionConfigInfo) connectionConfigurationModel;
+            PolarisRestAuthenticationInfo restAuthenticationInfo =
+                PolarisRestAuthenticationInfo.fromRestAuthenticationInfoModel(
+                    icebergRestConfigModel.getRestAuthentication());
+            config =
+                new IcebergRestConnectionConfigurationInfo(
+                    ConnectionType.ICEBERG_REST,
+                    icebergRestConfigModel.getRemoteUri(),
+                    icebergRestConfigModel.getRemoteCatalogName(),
+                    restAuthenticationInfo);
+            break;
+          default:
+            throw new IllegalStateException(
+                "Unsupported connection type: " + connectionConfigurationModel.getConnectionType());
+        }
+        internalProperties.put(
+            PolarisEntityConstants.getConnectionConfigInfoPropertyName(), config.serialize());
       }
       return this;
     }
