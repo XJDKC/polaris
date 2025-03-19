@@ -373,7 +373,7 @@ public class PolarisApplicationIntegrationTest {
                       .withPartitionSpec(PartitionSpec.unpartitioned())
                       .create())
           .isInstanceOf(BadRequestException.class)
-          .hasMessage("Malformed request: Cannot create table on external catalogs.");
+          .hasMessage("Malformed request: Cannot create table on static-facade external catalogs.");
     }
   }
 
@@ -517,7 +517,7 @@ public class PolarisApplicationIntegrationTest {
                               10L))
                       .commit())
           .isInstanceOf(BadRequestException.class)
-          .hasMessage("Malformed request: Cannot update table on external catalogs.");
+          .hasMessage("Malformed request: Cannot update table on static-facade external catalogs.");
     }
   }
 

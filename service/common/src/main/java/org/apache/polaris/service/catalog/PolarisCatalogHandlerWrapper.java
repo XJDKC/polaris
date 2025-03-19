@@ -264,9 +264,6 @@ public class PolarisCatalogHandlerWrapper {
       }
     }
     resolutionManifest.resolveAll();
-
-    CatalogEntity resolvedCatalogEntity =
-        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target = resolutionManifest.getResolvedPath(namespace, true);
     if (target == null) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", namespace);
@@ -300,9 +297,6 @@ public class PolarisCatalogHandlerWrapper {
             Arrays.asList(namespace.levels()), PolarisEntityType.NAMESPACE, true /* optional */),
         namespace);
     resolutionManifest.resolveAll();
-
-    CatalogEntity resolvedCatalogEntity =
-        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target = resolutionManifest.getResolvedPath(parentNamespace, true);
     if (target == null) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", parentNamespace);
@@ -340,9 +334,6 @@ public class PolarisCatalogHandlerWrapper {
             true /* optional */),
         identifier);
     resolutionManifest.resolveAll();
-
-    CatalogEntity resolvedCatalogEntity =
-        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target = resolutionManifest.getResolvedPath(namespace, true);
     if (target == null) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", namespace);
@@ -370,9 +361,6 @@ public class PolarisCatalogHandlerWrapper {
             true /* optional */),
         identifier);
     resolutionManifest.resolveAll();
-
-    CatalogEntity resolvedCatalogEntity =
-        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     PolarisResolvedPathWrapper target =
         resolutionManifest.getResolvedPath(identifier, subType, true);
     if (target == null) {
@@ -408,8 +396,6 @@ public class PolarisCatalogHandlerWrapper {
 
     ResolverStatus status = resolutionManifest.resolveAll();
 
-    CatalogEntity resolvedCatalogEntity =
-        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     // If one of the paths failed to resolve, throw exception based on the one that
     // we first failed to resolve.
     if (status.getStatus() == ResolverStatus.StatusEnum.PATH_COULD_NOT_BE_FULLY_RESOLVED) {
@@ -469,9 +455,6 @@ public class PolarisCatalogHandlerWrapper {
             true /* optional */),
         dst);
     ResolverStatus status = resolutionManifest.resolveAll();
-
-    CatalogEntity resolvedCatalogEntity =
-        CatalogEntity.of(resolutionManifest.getResolvedReferenceCatalogEntity().getRawLeafEntity());
     if (status.getStatus() == ResolverStatus.StatusEnum.PATH_COULD_NOT_BE_FULLY_RESOLVED
         && status.getFailedToResolvePath().getLastEntityType() == PolarisEntityType.NAMESPACE) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", dst.namespace());
