@@ -35,6 +35,9 @@ import org.apache.polaris.core.auth.PolarisAuthorizer;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.PolarisCredentialManager;
+import org.apache.polaris.core.credentials.PolarisCredentialManagerFactory;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.PolarisEntity;
 import org.apache.polaris.core.entity.PrincipalEntity;
 import org.apache.polaris.core.persistence.BasePersistence;
@@ -58,6 +61,7 @@ import org.apache.polaris.service.config.RealmEntityManagerFactory;
 import org.apache.polaris.service.config.ReservedProperties;
 import org.apache.polaris.service.context.catalog.CallContextCatalogFactory;
 import org.apache.polaris.service.context.catalog.PolarisCallContextCatalogFactory;
+import org.apache.polaris.service.credentials.DefaultPolarisCredentialManagerFactory;
 import org.apache.polaris.service.events.PolarisEventListener;
 import org.apache.polaris.service.events.TestPolarisEventListener;
 import org.apache.polaris.service.persistence.InMemoryPolarisMetaStoreManagerFactory;
@@ -74,6 +78,7 @@ public record TestServices(
     IcebergRestConfigurationApi restConfigurationApi,
     PolarisConfigurationStore configurationStore,
     PolarisDiagnostics polarisDiagnostics,
+    EntityMutationEngine entityMutationEngine,
     RealmEntityManagerFactory entityManagerFactory,
     MetaStoreManagerFactory metaStoreManagerFactory,
     RealmContext realmContext,
@@ -137,11 +142,15 @@ public record TestServices(
               () -> GoogleCredentials.create(new AccessToken(GCP_ACCESS_TOKEN, new Date())));
       InMemoryPolarisMetaStoreManagerFactory metaStoreManagerFactory =
           new InMemoryPolarisMetaStoreManagerFactory(
-              storageIntegrationProvider, polarisDiagnostics);
+              storageIntegrationProvider, polarisDiagnostics, null);
       RealmEntityManagerFactory realmEntityManagerFactory =
           new RealmEntityManagerFactory(metaStoreManagerFactory) {};
       UserSecretsManagerFactory userSecretsManagerFactory =
           new UnsafeInMemorySecretsManagerFactory();
+      PolarisCredentialManagerFactory credentialManagerFactory =
+          new DefaultPolarisCredentialManagerFactory(null);
+
+      EntityMutationEngine entityMutationEngine = entity -> entity;
 
       BasePersistence metaStoreSession =
           metaStoreManagerFactory.getOrCreateSessionSupplier(realmContext).get();
@@ -158,6 +167,7 @@ public record TestServices(
                   metaStoreSession,
                   polarisDiagnostics,
                   configurationStore,
+                  entityMutationEngine,
                   Mockito.mock(Clock.class));
             }
 
@@ -173,6 +183,8 @@ public record TestServices(
           metaStoreManagerFactory.getOrCreateMetaStoreManager(realmContext);
       UserSecretsManager userSecretsManager =
           userSecretsManagerFactory.getOrCreateUserSecretsManager(realmContext);
+      PolarisCredentialManager credentialManager =
+          credentialManagerFactory.getOrCreatePolarisCredentialManager(realmContext);
 
       FileIOFactory fileIOFactory =
           fileIOFactorySupplier.apply(
@@ -203,6 +215,7 @@ public record TestServices(
               entityManager,
               metaStoreManager,
               userSecretsManager,
+              credentialManager,
               authorizer,
               new DefaultCatalogPrefixParser(),
               reservedProperties,
@@ -262,6 +275,7 @@ public record TestServices(
           restConfigurationApi,
           configurationStore,
           polarisDiagnostics,
+          entityMutationEngine,
           realmEntityManagerFactory,
           metaStoreManagerFactory,
           realmContext,

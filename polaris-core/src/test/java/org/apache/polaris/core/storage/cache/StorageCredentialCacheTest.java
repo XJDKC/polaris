@@ -32,6 +32,7 @@ import org.apache.iceberg.exceptions.UnprocessableEntityException;
 import org.apache.polaris.core.PolarisCallContext;
 import org.apache.polaris.core.PolarisDefaultDiagServiceImpl;
 import org.apache.polaris.core.PolarisDiagnostics;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.PolarisBaseEntity;
 import org.apache.polaris.core.entity.PolarisEntity;
 import org.apache.polaris.core.entity.PolarisEntityConstants;
@@ -70,7 +71,8 @@ public class StorageCredentialCacheTest {
     // to interact with the metastore
     TransactionalPersistence metaStore =
         new TreeMapTransactionalPersistenceImpl(store, Mockito.mock(), RANDOM_SECRETS);
-    callCtx = new PolarisCallContext(metaStore, diagServices);
+    EntityMutationEngine entityMutationEngine = entity -> entity;
+    callCtx = new PolarisCallContext(metaStore, diagServices, entityMutationEngine);
     metaStoreManager = Mockito.mock(PolarisMetaStoreManager.class);
     storageCredentialCache = new StorageCredentialCache();
   }

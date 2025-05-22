@@ -26,6 +26,7 @@ import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.polaris.core.PolarisCallContext;
 import org.apache.polaris.core.PolarisDefaultDiagServiceImpl;
 import org.apache.polaris.core.PolarisDiagnostics;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.PolarisBaseEntity;
 import org.apache.polaris.core.entity.PolarisEntity;
 import org.apache.polaris.core.entity.PolarisEntitySubType;
@@ -65,6 +66,9 @@ public class InMemoryEntityCacheTest {
   // the meta store manager
   private final PolarisMetaStoreManager metaStoreManager;
 
+  // the entity mutation engine
+  private final EntityMutationEngine entityMutationEngine;
+
   /**
    * Initialize and create the test metadata
    *
@@ -91,7 +95,8 @@ public class InMemoryEntityCacheTest {
     diagServices = new PolarisDefaultDiagServiceImpl();
     store = new TreeMapMetaStore(diagServices);
     metaStore = new TreeMapTransactionalPersistenceImpl(store, Mockito.mock(), RANDOM_SECRETS);
-    callCtx = new PolarisCallContext(metaStore, diagServices);
+    entityMutationEngine = entity -> entity;
+    callCtx = new PolarisCallContext(metaStore, diagServices, entityMutationEngine);
     metaStoreManager = new TransactionalMetaStoreManagerImpl();
 
     // bootstrap the mata store with our test schema

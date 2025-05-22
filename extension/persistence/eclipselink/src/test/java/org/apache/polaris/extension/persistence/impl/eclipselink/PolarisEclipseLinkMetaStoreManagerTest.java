@@ -39,6 +39,7 @@ import org.apache.polaris.core.PolarisCallContext;
 import org.apache.polaris.core.PolarisDefaultDiagServiceImpl;
 import org.apache.polaris.core.PolarisDiagnostics;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.PolarisPrincipalSecrets;
 import org.apache.polaris.core.persistence.BasePolarisMetaStoreManagerTest;
 import org.apache.polaris.core.persistence.PolarisTestMetaStoreManager;
@@ -103,12 +104,14 @@ public class PolarisEclipseLinkMetaStoreManagerTest extends BasePolarisMetaStore
     PolarisEclipseLinkMetaStoreSessionImpl session =
         new PolarisEclipseLinkMetaStoreSessionImpl(
             store, Mockito.mock(), () -> "realm", null, "polaris", RANDOM_SECRETS);
+    EntityMutationEngine entityMutationEngine = entity -> entity;
     return new PolarisTestMetaStoreManager(
         new TransactionalMetaStoreManagerImpl(),
         new PolarisCallContext(
             session,
             diagServices,
             new PolarisConfigurationStore() {},
+            entityMutationEngine,
             timeSource.withZone(ZoneId.systemDefault())));
   }
 

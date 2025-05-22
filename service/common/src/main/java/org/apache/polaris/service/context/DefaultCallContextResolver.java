@@ -28,6 +28,7 @@ import org.apache.polaris.core.PolarisDiagnostics;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.persistence.BasePersistence;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.slf4j.Logger;
@@ -66,8 +67,10 @@ public class DefaultCallContextResolver implements CallContextResolver {
     // factories would then inject something else instead if needed.
     BasePersistence metaStoreSession =
         metaStoreManagerFactory.getOrCreateSessionSupplier(realmContext).get();
+    EntityMutationEngine entityMutationEngine = entity -> entity;
     PolarisCallContext polarisContext =
-        new PolarisCallContext(metaStoreSession, diagnostics, configurationStore, clock);
+        new PolarisCallContext(
+            metaStoreSession, diagnostics, configurationStore, entityMutationEngine, clock);
     return CallContext.of(realmContext, polarisContext);
   }
 }

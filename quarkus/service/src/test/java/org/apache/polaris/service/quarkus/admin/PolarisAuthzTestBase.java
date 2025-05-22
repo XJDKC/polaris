@@ -60,6 +60,9 @@ import org.apache.polaris.core.config.FeatureConfiguration;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.PolarisCredentialManager;
+import org.apache.polaris.core.credentials.PolarisCredentialManagerFactory;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.CatalogEntity;
 import org.apache.polaris.core.entity.CatalogRoleEntity;
 import org.apache.polaris.core.entity.PolarisBaseEntity;
@@ -189,6 +192,7 @@ public abstract class PolarisAuthzTestBase {
   @Inject protected RealmEntityManagerFactory realmEntityManagerFactory;
   @Inject protected CallContextCatalogFactory callContextCatalogFactory;
   @Inject protected UserSecretsManagerFactory userSecretsManagerFactory;
+  @Inject protected PolarisCredentialManagerFactory credentialManagerFactory;
   @Inject protected PolarisDiagnostics diagServices;
   @Inject protected Clock clock;
   @Inject protected FileIOFactory fileIOFactory;
@@ -201,7 +205,9 @@ public abstract class PolarisAuthzTestBase {
   protected PolarisAdminService adminService;
   protected PolarisEntityManager entityManager;
   protected PolarisMetaStoreManager metaStoreManager;
+  protected EntityMutationEngine entityMutationEngine;
   protected UserSecretsManager userSecretsManager;
+  protected PolarisCredentialManager credentialManager;
   protected TransactionalPersistence metaStoreSession;
   protected PolarisBaseEntity catalogEntity;
   protected PrincipalEntity principalEntity;
@@ -223,6 +229,8 @@ public abstract class PolarisAuthzTestBase {
     RealmContext realmContext = testInfo::getDisplayName;
     metaStoreManager = managerFactory.getOrCreateMetaStoreManager(realmContext);
     userSecretsManager = userSecretsManagerFactory.getOrCreateUserSecretsManager(realmContext);
+    credentialManager = credentialManagerFactory.getOrCreatePolarisCredentialManager(realmContext);
+    entityMutationEngine = entity -> entity;
 
     Map<String, Object> configMap =
         Map.of(
@@ -241,6 +249,7 @@ public abstract class PolarisAuthzTestBase {
                 return r;
               }
             },
+            entityMutationEngine,
             clock);
     this.entityManager = realmEntityManagerFactory.getOrCreateEntityManager(realmContext);
 

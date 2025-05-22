@@ -28,6 +28,7 @@ import org.apache.polaris.core.PolarisCallContext;
 import org.apache.polaris.core.PolarisDefaultDiagServiceImpl;
 import org.apache.polaris.core.PolarisDiagnostics;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.persistence.AtomicOperationMetaStoreManager;
 import org.apache.polaris.core.persistence.BasePolarisMetaStoreManagerTest;
 import org.apache.polaris.core.persistence.PolarisTestMetaStoreManager;
@@ -58,12 +59,14 @@ public class AtomicMetastoreManagerWithJdbcBasePersistenceImplTest
 
     JdbcBasePersistenceImpl basePersistence =
         new JdbcBasePersistenceImpl(datasourceOperations, RANDOM_SECRETS, Mockito.mock(), "REALM");
+    EntityMutationEngine entityMutationEngine = entity -> entity;
     return new PolarisTestMetaStoreManager(
         new AtomicOperationMetaStoreManager(),
         new PolarisCallContext(
             basePersistence,
             diagServices,
             new PolarisConfigurationStore() {},
+            entityMutationEngine,
             timeSource.withZone(ZoneId.systemDefault())));
   }
 

@@ -30,6 +30,7 @@ import org.apache.polaris.core.PolarisDefaultDiagServiceImpl;
 import org.apache.polaris.core.PolarisDiagnostics;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.storage.aws.AwsStorageConfigurationInfo;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -93,6 +94,7 @@ class InMemoryStorageIntegrationTest {
   public void testValidateAccessToLocationsWithWildcard() {
     MockInMemoryStorageIntegration storage = new MockInMemoryStorageIntegration();
     Map<String, Boolean> config = Map.of("ALLOW_WILDCARD_LOCATION", true);
+    EntityMutationEngine entityMutationEngine = entity -> entity;
     PolarisCallContext polarisCallContext =
         new PolarisCallContext(
             Mockito.mock(),
@@ -104,6 +106,7 @@ class InMemoryStorageIntegrationTest {
                 return (T) config.get(configName);
               }
             },
+            entityMutationEngine,
             Clock.systemUTC());
     try (CallContext ignored =
         CallContext.setCurrentContext(CallContext.of(() -> "realm", polarisCallContext))) {

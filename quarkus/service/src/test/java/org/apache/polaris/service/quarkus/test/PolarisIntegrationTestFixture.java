@@ -114,7 +114,11 @@ public class PolarisIntegrationTestFixture {
         helper.metaStoreManagerFactory.getOrCreateSessionSupplier(realmContext).get();
     PolarisCallContext polarisContext =
         new PolarisCallContext(
-            metaStoreSession, helper.diagServices, helper.configurationStore, helper.clock);
+            metaStoreSession,
+            helper.diagServices,
+            helper.configurationStore,
+            helper.entityMutationEngine,
+            helper.clock);
     try (CallContext ctx = CallContext.of(realmContext, polarisContext)) {
       CallContext.setCurrentContext(ctx);
       PolarisMetaStoreManager metaStoreManager =

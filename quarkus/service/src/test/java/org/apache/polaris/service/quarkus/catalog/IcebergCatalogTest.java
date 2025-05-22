@@ -82,6 +82,7 @@ import org.apache.polaris.core.config.FeatureConfiguration;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.CatalogEntity;
 import org.apache.polaris.core.entity.PolarisBaseEntity;
 import org.apache.polaris.core.entity.PolarisEntity;
@@ -208,6 +209,7 @@ public abstract class IcebergCatalogTest extends CatalogTests<IcebergCatalog> {
   @Inject UserSecretsManagerFactory userSecretsManagerFactory;
   @Inject PolarisDiagnostics diagServices;
   @Inject PolarisEventListener polarisEventListener;
+  @Inject EntityMutationEngine entityMutationEngine;
 
   private IcebergCatalog catalog;
   private CallContext callContext;
@@ -249,6 +251,7 @@ public abstract class IcebergCatalogTest extends CatalogTests<IcebergCatalog> {
             managerFactory.getOrCreateSessionSupplier(realmContext).get(),
             diagServices,
             configurationStore,
+            entityMutationEngine,
             Clock.systemDefaultZone());
     entityManager =
         new PolarisEntityManager(

@@ -29,6 +29,7 @@ import org.apache.polaris.core.admin.model.GcpStorageConfigInfo;
 import org.apache.polaris.core.admin.model.PolarisCatalog;
 import org.apache.polaris.core.admin.model.StorageConfigInfo;
 import org.apache.polaris.core.context.CallContext;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.CatalogEntity;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.service.persistence.InMemoryPolarisMetaStoreManagerFactory;
@@ -43,10 +44,12 @@ public class CatalogEntityTest {
   @BeforeAll
   public static void setup() {
     MetaStoreManagerFactory metaStoreManagerFactory = new InMemoryPolarisMetaStoreManagerFactory();
+    EntityMutationEngine entityMutationEngine = entity -> entity;
     PolarisCallContext polarisCallContext =
         new PolarisCallContext(
             metaStoreManagerFactory.getOrCreateSessionSupplier(() -> "realm").get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     CallContext callContext = CallContext.of(() -> "realm", polarisCallContext);
     CallContext.setCurrentContext(callContext);
   }

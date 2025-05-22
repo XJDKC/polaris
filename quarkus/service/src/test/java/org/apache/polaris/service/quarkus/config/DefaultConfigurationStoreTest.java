@@ -34,6 +34,7 @@ import org.apache.polaris.core.config.FeatureConfiguration;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.CatalogEntity;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.service.config.DefaultConfigurationStore;
@@ -74,6 +75,7 @@ public class DefaultConfigurationStoreTest {
   @Inject PolarisConfigurationStore configurationStore;
   @Inject PolarisDiagnostics diagServices;
   @Inject FeaturesConfiguration featuresConfiguration;
+  @Inject EntityMutationEngine entityMutationEngine;
 
   @BeforeEach
   public void before(TestInfo testInfo) {
@@ -89,6 +91,7 @@ public class DefaultConfigurationStoreTest {
             managerFactory.getOrCreateSessionSupplier(realmContext).get(),
             diagServices,
             configurationStore,
+            entityMutationEngine,
             Clock.systemDefaultZone());
   }
 
@@ -101,7 +104,8 @@ public class DefaultConfigurationStoreTest {
     PolarisCallContext callCtx =
         new PolarisCallContext(
             metastoreFactory.getOrCreateSessionSupplier(() -> "realm1").get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     Object value = defaultConfigurationStore.getConfiguration(callCtx, "missingKeyWithoutDefault");
     assertThat(value).isNull();
     Object defaultValue =
@@ -137,7 +141,8 @@ public class DefaultConfigurationStoreTest {
     PolarisCallContext realm1Ctx =
         new PolarisCallContext(
             metastoreFactory.getOrCreateSessionSupplier(() -> "realm1").get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     Object value =
         defaultConfigurationStore.getConfiguration(realm1Ctx, "missingKeyWithoutDefault");
     assertThat(value).isNull();
@@ -155,7 +160,8 @@ public class DefaultConfigurationStoreTest {
     PolarisCallContext realm2Ctx =
         new PolarisCallContext(
             metastoreFactory.getOrCreateSessionSupplier(() -> "realm2").get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     CallContext.setCurrentContext(CallContext.of(() -> "realm2", realm2Ctx));
     Integer keyOneRealm2 = defaultConfigurationStore.getConfiguration(realm2Ctx, "key1");
     assertThat(keyOneRealm2).isEqualTo(realm2KeyOneValue);
@@ -166,7 +172,8 @@ public class DefaultConfigurationStoreTest {
     PolarisCallContext realm3Ctx =
         new PolarisCallContext(
             metastoreFactory.getOrCreateSessionSupplier(() -> "realm3").get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     CallContext.setCurrentContext(CallContext.of(() -> "realm3", realm3Ctx));
     Integer keyOneRealm3 = defaultConfigurationStore.getConfiguration(realm3Ctx, "key1");
     assertThat(keyOneRealm3).isEqualTo(defaultKeyOneValue);

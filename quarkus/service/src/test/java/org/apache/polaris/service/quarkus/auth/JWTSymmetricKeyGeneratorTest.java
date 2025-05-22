@@ -48,7 +48,7 @@ public class JWTSymmetricKeyGeneratorTest {
   /** Sanity test to verify that we can generate a token */
   @Test
   public void testJWTSymmetricKeyGenerator() {
-    PolarisCallContext polarisCallContext = new PolarisCallContext(null, null, null, null);
+    PolarisCallContext polarisCallContext = new PolarisCallContext(null, null, null, null, null);
     CallContext.setCurrentContext(
         new CallContext() {
           @Override

@@ -47,6 +47,7 @@ import org.apache.polaris.core.PolarisCallContext;
 import org.apache.polaris.core.PolarisDefaultDiagServiceImpl;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.identity.EntityMutationEngine;
 import org.apache.polaris.core.entity.AsyncTaskType;
 import org.apache.polaris.core.entity.PolarisBaseEntity;
 import org.apache.polaris.core.entity.PolarisTaskConstants;
@@ -63,6 +64,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 public class BatchFileCleanupTaskHandlerTest {
   @Inject MetaStoreManagerFactory metaStoreManagerFactory;
+  @Inject EntityMutationEngine entityMutationEngine;
   private final RealmContext realmContext = () -> "realmName";
 
   private TaskFileIOSupplier buildTaskFileIOSupplier(FileIO fileIO) {
@@ -93,7 +95,8 @@ public class BatchFileCleanupTaskHandlerTest {
     PolarisCallContext polarisCallContext =
         new PolarisCallContext(
             metaStoreManagerFactory.getOrCreateSessionSupplier(realmContext).get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     try (CallContext callCtx = CallContext.of(realmContext, polarisCallContext)) {
       CallContext.setCurrentContext(callCtx);
       FileIO fileIO =
@@ -210,7 +213,8 @@ public class BatchFileCleanupTaskHandlerTest {
     PolarisCallContext polarisCallContext =
         new PolarisCallContext(
             metaStoreManagerFactory.getOrCreateSessionSupplier(realmContext).get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     try (CallContext callCtx = CallContext.of(realmContext, polarisCallContext)) {
       CallContext.setCurrentContext(callCtx);
       FileIO fileIO = new InMemoryFileIO();
@@ -257,7 +261,8 @@ public class BatchFileCleanupTaskHandlerTest {
     PolarisCallContext polarisCallContext =
         new PolarisCallContext(
             metaStoreManagerFactory.getOrCreateSessionSupplier(realmContext).get(),
-            new PolarisDefaultDiagServiceImpl());
+            new PolarisDefaultDiagServiceImpl(),
+            entityMutationEngine);
     try (CallContext callCtx = CallContext.of(realmContext, polarisCallContext)) {
       CallContext.setCurrentContext(callCtx);
       Map<String, AtomicInteger> retryCounter = new HashMap<>();
