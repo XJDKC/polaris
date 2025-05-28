@@ -39,6 +39,7 @@ import org.apache.polaris.core.entity.PolarisEntityConstants;
 import org.apache.polaris.core.entity.PolarisEntitySubType;
 import org.apache.polaris.core.entity.PolarisEntityType;
 import org.apache.polaris.core.entity.PolarisPrincipalSecrets;
+import org.apache.polaris.core.identity.mutation.EntityMutationEngine;
 import org.apache.polaris.core.persistence.AtomicOperationMetaStoreManager;
 import org.apache.polaris.core.persistence.BasePersistence;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
@@ -75,6 +76,7 @@ public class JdbcMetaStoreManagerFactory implements MetaStoreManagerFactory {
   @Inject PolarisStorageIntegrationProvider storageIntegrationProvider;
   @Inject Instance<DataSource> dataSource;
   @Inject RelationalJdbcConfiguration relationalJdbcConfiguration;
+  @Inject EntityMutationEngine entityMutationEngine;
 
   protected JdbcMetaStoreManagerFactory() {}
 
@@ -160,7 +162,8 @@ public class JdbcMetaStoreManagerFactory implements MetaStoreManagerFactory {
       PolarisMetaStoreManager metaStoreManager = getOrCreateMetaStoreManager(() -> realm);
       BasePersistence session = getOrCreateSessionSupplier(() -> realm).get();
 
-      PolarisCallContext callContext = new PolarisCallContext(session, diagServices);
+      PolarisCallContext callContext =
+          new PolarisCallContext(session, diagServices, entityMutationEngine);
       BaseResult result = metaStoreManager.purge(callContext);
       results.put(realm, result);
 
@@ -230,7 +233,9 @@ public class JdbcMetaStoreManagerFactory implements MetaStoreManagerFactory {
     // CallContext may not have been resolved yet.
     PolarisCallContext polarisContext =
         new PolarisCallContext(
-            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(), diagServices);
+            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(),
+            diagServices,
+            entityMutationEngine);
     if (CallContext.getCurrentContext() == null) {
       CallContext.setCurrentContext(CallContext.of(realmContext, polarisContext));
     }
@@ -288,7 +293,9 @@ public class JdbcMetaStoreManagerFactory implements MetaStoreManagerFactory {
       RealmContext realmContext, PolarisMetaStoreManager metaStoreManager) {
     PolarisCallContext polarisContext =
         new PolarisCallContext(
-            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(), diagServices);
+            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(),
+            diagServices,
+            entityMutationEngine);
     if (CallContext.getCurrentContext() == null) {
       CallContext.setCurrentContext(CallContext.of(realmContext, polarisContext));
     }
