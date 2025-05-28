@@ -59,6 +59,7 @@ import org.apache.polaris.core.entity.PolarisEntitySubType;
 import org.apache.polaris.core.entity.PolarisEntityType;
 import org.apache.polaris.core.entity.PrincipalEntity;
 import org.apache.polaris.core.entity.table.GenericTableEntity;
+import org.apache.polaris.core.identity.mutation.EntityMutationEngine;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.core.persistence.PolarisEntityManager;
 import org.apache.polaris.core.persistence.PolarisMetaStoreManager;
@@ -129,6 +130,7 @@ public class PolarisGenericTableCatalogTest {
   @Inject PolarisConfigurationStore configurationStore;
   @Inject PolarisStorageIntegrationProvider storageIntegrationProvider;
   @Inject PolarisDiagnostics diagServices;
+  @Inject EntityMutationEngine entityMutationEngine;
 
   private PolarisGenericTableCatalog genericTableCatalog;
   private IcebergCatalog icebergCatalog;
@@ -174,6 +176,7 @@ public class PolarisGenericTableCatalogTest {
             managerFactory.getOrCreateSessionSupplier(realmContext).get(),
             diagServices,
             configurationStore,
+            entityMutationEngine,
             Clock.systemDefaultZone());
     entityManager =
         new PolarisEntityManager(

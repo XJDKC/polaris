@@ -33,6 +33,7 @@ import org.apache.polaris.core.config.FeatureConfiguration;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.RealmContext;
 import org.apache.polaris.core.entity.CatalogEntity;
+import org.apache.polaris.core.identity.mutation.EntityMutationEngine;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.service.config.DefaultConfigurationStore;
 import org.apache.polaris.service.config.FeaturesConfiguration;
@@ -79,6 +80,7 @@ public class DefaultConfigurationStoreTest {
   @Inject PolarisConfigurationStore configurationStore;
   @Inject PolarisDiagnostics diagServices;
   @Inject FeaturesConfiguration featuresConfiguration;
+  @Inject EntityMutationEngine entityMutationEngine;
 
   @BeforeEach
   public void before(TestInfo testInfo) {
@@ -94,6 +96,7 @@ public class DefaultConfigurationStoreTest {
             managerFactory.getOrCreateSessionSupplier(realmContext).get(),
             diagServices,
             configurationStore,
+            entityMutationEngine,
             Clock.systemDefaultZone());
   }
 

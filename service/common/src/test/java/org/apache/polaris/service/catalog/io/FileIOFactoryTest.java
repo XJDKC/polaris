@@ -152,6 +152,7 @@ public class FileIOFactoryTest {
                     .get(),
                 testServices.polarisDiagnostics(),
                 testServices.configurationStore(),
+                testServices.entityMutationEngine(),
                 Mockito.mock(Clock.class));
           }
 
