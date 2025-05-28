@@ -32,6 +32,7 @@ import org.apache.polaris.core.entity.PolarisEntity;
 import org.apache.polaris.core.entity.PolarisEntityConstants;
 import org.apache.polaris.core.entity.PolarisEntitySubType;
 import org.apache.polaris.core.entity.PolarisEntityType;
+import org.apache.polaris.core.identity.mutation.EntityMutationEngine;
 import org.apache.polaris.core.persistence.bootstrap.RootCredentialsSet;
 import org.apache.polaris.core.persistence.cache.EntityCache;
 import org.apache.polaris.core.persistence.cache.InMemoryEntityCache;
@@ -63,10 +64,13 @@ public abstract class LocalPolarisMetaStoreManagerFactory<StoreType>
       LoggerFactory.getLogger(LocalPolarisMetaStoreManagerFactory.class);
 
   private final PolarisDiagnostics diagnostics;
+  private final EntityMutationEngine entityMutationEngine;
   private boolean bootstrap;
 
-  protected LocalPolarisMetaStoreManagerFactory(@Nonnull PolarisDiagnostics diagnostics) {
+  protected LocalPolarisMetaStoreManagerFactory(
+      @Nonnull PolarisDiagnostics diagnostics, @Nonnull EntityMutationEngine entityMutationEngine) {
     this.diagnostics = diagnostics;
+    this.entityMutationEngine = entityMutationEngine;
   }
 
   protected abstract StoreType createBackingStore(@Nonnull PolarisDiagnostics diagnostics);
@@ -133,7 +137,8 @@ public abstract class LocalPolarisMetaStoreManagerFactory<StoreType>
       PolarisMetaStoreManager metaStoreManager = getOrCreateMetaStoreManager(() -> realm);
       TransactionalPersistence session = getOrCreateSessionSupplier(() -> realm).get();
 
-      PolarisCallContext callContext = new PolarisCallContext(session, diagServices);
+      PolarisCallContext callContext =
+          new PolarisCallContext(session, diagServices, entityMutationEngine);
       BaseResult result = metaStoreManager.purge(callContext);
       results.put(realm, result);
 
@@ -204,7 +209,9 @@ public abstract class LocalPolarisMetaStoreManagerFactory<StoreType>
     // CallContext may not have been resolved yet.
     PolarisCallContext polarisContext =
         new PolarisCallContext(
-            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(), diagServices);
+            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(),
+            diagServices,
+            entityMutationEngine);
     if (CallContext.getCurrentContext() == null) {
       CallContext.setCurrentContext(CallContext.of(realmContext, polarisContext));
     }
@@ -251,7 +258,9 @@ public abstract class LocalPolarisMetaStoreManagerFactory<StoreType>
       RealmContext realmContext, PolarisMetaStoreManager metaStoreManager) {
     PolarisCallContext polarisContext =
         new PolarisCallContext(
-            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(), diagServices);
+            sessionSupplierMap.get(realmContext.getRealmIdentifier()).get(),
+            diagServices,
+            entityMutationEngine);
     if (CallContext.getCurrentContext() == null) {
       CallContext.setCurrentContext(CallContext.of(realmContext, polarisContext));
     }

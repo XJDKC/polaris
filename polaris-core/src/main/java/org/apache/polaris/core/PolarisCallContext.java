@@ -22,6 +22,7 @@ import jakarta.annotation.Nonnull;
 import java.time.Clock;
 import java.time.ZoneId;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
+import org.apache.polaris.core.identity.mutation.EntityMutationEngine;
 import org.apache.polaris.core.persistence.BasePersistence;
 
 /**
@@ -38,24 +39,31 @@ public class PolarisCallContext {
 
   private final PolarisConfigurationStore configurationStore;
 
+  private final EntityMutationEngine entityMutationEngine;
+
   private final Clock clock;
 
   public PolarisCallContext(
       @Nonnull BasePersistence metaStore,
       @Nonnull PolarisDiagnostics diagServices,
       @Nonnull PolarisConfigurationStore configurationStore,
+      @Nonnull EntityMutationEngine entityMutationEngine,
       @Nonnull Clock clock) {
     this.metaStore = metaStore;
     this.diagServices = diagServices;
     this.configurationStore = configurationStore;
+    this.entityMutationEngine = entityMutationEngine;
     this.clock = clock;
   }
 
   public PolarisCallContext(
-      @Nonnull BasePersistence metaStore, @Nonnull PolarisDiagnostics diagServices) {
+      @Nonnull BasePersistence metaStore,
+      @Nonnull PolarisDiagnostics diagServices,
+      @Nonnull EntityMutationEngine entityMutationEngine) {
     this.metaStore = metaStore;
     this.diagServices = diagServices;
     this.configurationStore = new PolarisConfigurationStore() {};
+    this.entityMutationEngine = entityMutationEngine;
     this.clock = Clock.system(ZoneId.systemDefault());
   }
 
@@ -64,6 +72,7 @@ public class PolarisCallContext {
         original.getMetaStore().detach(),
         original.getDiagServices(),
         original.getConfigurationStore(),
+        original.getEntityMutationEngine(),
         original.getClock());
   }
 
@@ -77,6 +86,10 @@ public class PolarisCallContext {
 
   public PolarisConfigurationStore getConfigurationStore() {
     return configurationStore;
+  }
+
+  public EntityMutationEngine getEntityMutationEngine() {
+    return entityMutationEngine;
   }
 
   public Clock getClock() {
