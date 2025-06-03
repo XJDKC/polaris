@@ -51,11 +51,11 @@ import software.amazon.awssdk.services.sts.model.Credentials;
 @TestProfile(DefaultPolarisCredentialManagerTest.Profile.class)
 public class DefaultPolarisCredentialManagerTest {
 
-  @InjectMock
-  RealmContext realmContext;
+  @InjectMock RealmContext realmContext;
 
   @Inject QuarkusPolarisCredentialManagerConfiguration configuration;
   @Inject ServiceIdentityRegistry serviceIdentityRegistry;
+
   DefaultPolarisCredentialManager credentialManager;
 
   public static class Profile implements QuarkusTestProfile {

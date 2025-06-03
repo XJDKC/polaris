@@ -19,10 +19,9 @@
 
 package org.apache.polaris.core.credentials;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.EnumMap;
 import java.util.Optional;
-
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.polaris.core.connection.AuthenticationParametersDpo;
 import org.apache.polaris.core.connection.SigV4AuthenticationParametersDpo;
 import org.apache.polaris.core.credentials.connection.ConnectionCredentialProperty;
