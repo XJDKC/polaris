@@ -58,6 +58,7 @@ import org.apache.polaris.core.context.RealmContext;
 import org.apache.polaris.core.entity.CatalogEntity;
 import org.apache.polaris.core.entity.PolarisEntity;
 import org.apache.polaris.core.entity.PrincipalEntity;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistry;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.core.persistence.PolarisMetaStoreManager;
 import org.apache.polaris.core.persistence.PolicyMappingAlreadyExistsException;
@@ -130,6 +131,7 @@ public abstract class AbstractPolicyCatalogTest {
   @Inject PolarisDiagnostics diagServices;
   @Inject ResolverFactory resolverFactory;
   @Inject ResolutionManifestFactory resolutionManifestFactory;
+  @Inject ServiceIdentityRegistry serviceIdentityRegistry;
 
   private PolicyCatalog policyCatalog;
   private IcebergCatalog icebergCatalog;
@@ -194,6 +196,7 @@ public abstract class AbstractPolicyCatalogTest {
             resolutionManifestFactory,
             metaStoreManager,
             userSecretsManager,
+            serviceIdentityRegistry,
             securityContext,
             authorizer,
             reservedProperties);

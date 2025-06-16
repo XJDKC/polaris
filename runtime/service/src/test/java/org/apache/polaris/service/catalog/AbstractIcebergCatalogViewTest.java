@@ -49,6 +49,7 @@ import org.apache.polaris.core.config.RealmConfig;
 import org.apache.polaris.core.context.RealmContext;
 import org.apache.polaris.core.entity.CatalogEntity;
 import org.apache.polaris.core.entity.PrincipalEntity;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistry;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.core.persistence.PolarisMetaStoreManager;
 import org.apache.polaris.core.persistence.resolver.ResolutionManifestFactory;
@@ -84,6 +85,8 @@ public abstract class AbstractIcebergCatalogViewTest extends ViewCatalogTests<Ic
   static {
     Assumptions.setPreferredAssumptionException(PreferredAssumptionException.JUNIT5);
   }
+
+  @Inject ServiceIdentityRegistry serviceIdentityRegistry;
 
   public static class Profile extends Profiles.DefaultProfile {
     @Override
@@ -182,6 +185,7 @@ public abstract class AbstractIcebergCatalogViewTest extends ViewCatalogTests<Ic
             resolutionManifestFactory,
             metaStoreManager,
             userSecretsManager,
+            serviceIdentityRegistry,
             securityContext,
             authorizer,
             reservedProperties);

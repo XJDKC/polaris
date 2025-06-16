@@ -73,6 +73,8 @@ import org.apache.polaris.core.entity.CatalogRoleEntity;
 import org.apache.polaris.core.entity.PolarisPrivilege;
 import org.apache.polaris.core.entity.PrincipalEntity;
 import org.apache.polaris.core.entity.PrincipalRoleEntity;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistry;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistryFactory;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.core.persistence.PolarisMetaStoreManager;
 import org.apache.polaris.core.persistence.dao.entity.BaseResult;
@@ -99,6 +101,7 @@ public class PolarisServiceImpl
   private final PolarisAuthorizer polarisAuthorizer;
   private final MetaStoreManagerFactory metaStoreManagerFactory;
   private final UserSecretsManagerFactory userSecretsManagerFactory;
+  private final ServiceIdentityRegistryFactory serviceIdentityRegistryFactory;
   private final CallContext callContext;
   private final RealmConfig realmConfig;
   private final ReservedProperties reservedProperties;
@@ -108,12 +111,14 @@ public class PolarisServiceImpl
       ResolutionManifestFactory resolutionManifestFactory,
       MetaStoreManagerFactory metaStoreManagerFactory,
       UserSecretsManagerFactory userSecretsManagerFactory,
+      ServiceIdentityRegistryFactory serviceIdentityRegistryFactory,
       PolarisAuthorizer polarisAuthorizer,
       CallContext callContext,
       ReservedProperties reservedProperties) {
     this.resolutionManifestFactory = resolutionManifestFactory;
     this.metaStoreManagerFactory = metaStoreManagerFactory;
     this.userSecretsManagerFactory = userSecretsManagerFactory;
+    this.serviceIdentityRegistryFactory = serviceIdentityRegistryFactory;
     this.polarisAuthorizer = polarisAuthorizer;
     this.callContext = callContext;
     this.realmConfig = callContext.getRealmConfig();
@@ -131,11 +136,14 @@ public class PolarisServiceImpl
         metaStoreManagerFactory.getOrCreateMetaStoreManager(realmContext);
     UserSecretsManager userSecretsManager =
         userSecretsManagerFactory.getOrCreateUserSecretsManager(realmContext);
+    ServiceIdentityRegistry serviceIdentityRegistry =
+        serviceIdentityRegistryFactory.getOrCreateServiceIdentityRegistry(realmContext);
     return new PolarisAdminService(
         callContext,
         resolutionManifestFactory,
         metaStoreManager,
         userSecretsManager,
+        serviceIdentityRegistry,
         securityContext,
         polarisAuthorizer,
         reservedProperties);
