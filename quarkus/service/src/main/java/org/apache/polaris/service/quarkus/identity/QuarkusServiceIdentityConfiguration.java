@@ -16,21 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.polaris.core.connection.iceberg;
 
-import jakarta.annotation.Nonnull;
+package org.apache.polaris.service.quarkus.identity;
+
+import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefaults;
+import io.smallrye.config.WithParentName;
+import io.smallrye.config.WithUnnamedKey;
 import java.util.Map;
-import org.apache.polaris.core.credentials.PolarisCredentialManager;
-import org.apache.polaris.core.secrets.UserSecretsManager;
+import org.apache.polaris.service.identity.ServiceIdentityConfiguration;
 
-/**
- * Configuration wrappers which ultimately translate their contents into Iceberg properties and
- * which may hold other nested configuration wrapper objects implement this interface to allow
- * delegating type-specific configuration translation logic to subclasses instead of needing to
- * expose the internals of deeply nested configuration objects to a visitor class.
- */
-public interface IcebergCatalogPropertiesProvider {
-  @Nonnull
-  Map<String, String> asIcebergCatalogProperties(
-      UserSecretsManager secretsManager, PolarisCredentialManager credentialManager);
+@ConfigMapping(prefix = "polaris.service-identity")
+public interface QuarkusServiceIdentityConfiguration
+    extends ServiceIdentityConfiguration<QuarkusRealmServiceIdentityConfiguration> {
+  @WithParentName
+  @WithUnnamedKey(DEFAULT_REALM_KEY)
+  @WithDefaults
+  @Override
+  Map<String, QuarkusRealmServiceIdentityConfiguration> realms();
 }
