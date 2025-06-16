@@ -42,7 +42,11 @@ import org.apache.polaris.core.auth.PolarisAuthorizerImpl;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.PolarisCredentialManager;
+import org.apache.polaris.core.credentials.PolarisCredentialManagerFactory;
 import org.apache.polaris.core.entity.transformation.EntityTransformationEngine;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistry;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistryFactory;
 import org.apache.polaris.core.persistence.BasePersistence;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.core.persistence.PolarisEntityManager;
@@ -63,13 +67,18 @@ import org.apache.polaris.service.config.RealmEntityManagerFactory;
 import org.apache.polaris.service.context.RealmContextConfiguration;
 import org.apache.polaris.service.context.RealmContextResolver;
 import org.apache.polaris.service.events.PolarisEventListener;
+import org.apache.polaris.service.identity.ServiceIdentityConfiguration;
 import org.apache.polaris.service.quarkus.auth.QuarkusAuthenticationConfiguration;
 import org.apache.polaris.service.quarkus.auth.QuarkusAuthenticationRealmConfiguration;
 import org.apache.polaris.service.quarkus.auth.external.tenant.OidcTenantResolver;
 import org.apache.polaris.service.quarkus.catalog.io.QuarkusFileIOConfiguration;
 import org.apache.polaris.service.quarkus.context.QuarkusRealmContextConfiguration;
 import org.apache.polaris.service.quarkus.context.RealmContextFilter;
+import org.apache.polaris.service.quarkus.credentials.QuarkusPolarisCredentialManagerConfiguration;
 import org.apache.polaris.service.quarkus.events.QuarkusPolarisEventListenerConfiguration;
+import org.apache.polaris.service.quarkus.identity.QuarkusRealmServiceIdentityConfiguration;
+import org.apache.polaris.service.quarkus.identity.QuarkusServiceIdentityConfiguration;
+import org.apache.polaris.service.quarkus.identity.QuarkusServiceIdentityRegistryConfiguration;
 import org.apache.polaris.service.quarkus.persistence.QuarkusPersistenceConfiguration;
 import org.apache.polaris.service.quarkus.ratelimiter.QuarkusRateLimiterFilterConfiguration;
 import org.apache.polaris.service.quarkus.ratelimiter.QuarkusTokenBucketConfiguration;
@@ -175,6 +184,26 @@ public class QuarkusProducers {
       QuarkusSecretsManagerConfiguration config,
       @Any Instance<UserSecretsManagerFactory> userSecretsManagerFactories) {
     return userSecretsManagerFactories.select(Identifier.Literal.of(config.type())).get();
+  }
+
+  @Produces
+  public ServiceIdentityConfiguration<QuarkusRealmServiceIdentityConfiguration>
+      serviceIdentityConfiguration(QuarkusServiceIdentityConfiguration config) {
+    return config;
+  }
+
+  @Produces
+  public ServiceIdentityRegistryFactory serviceIdentityRegistryFactory(
+      QuarkusServiceIdentityRegistryConfiguration config,
+      @Any Instance<ServiceIdentityRegistryFactory> serviceIdentityRegistryFactories) {
+    return serviceIdentityRegistryFactories.select(Identifier.Literal.of(config.type())).get();
+  }
+
+  @Produces
+  public PolarisCredentialManagerFactory credentialManagerFactory(
+      QuarkusPolarisCredentialManagerConfiguration config,
+      @Any Instance<PolarisCredentialManagerFactory> credentialManagerFactories) {
+    return credentialManagerFactories.select(Identifier.Literal.of(config.type())).get();
   }
 
   /**
@@ -358,6 +387,27 @@ public class QuarkusProducers {
       org.apache.polaris.service.quarkus.auth.external.OidcConfiguration config,
       @Any Instance<OidcTenantResolver> resolvers) {
     return resolvers.select(Identifier.Literal.of(config.tenantResolver())).get();
+  }
+
+  @Produces
+  @RequestScoped
+  public QuarkusRealmServiceIdentityConfiguration realmServiceIdentityConfig(
+      QuarkusServiceIdentityConfiguration config, RealmContext realmContext) {
+    return config.forRealm(realmContext);
+  }
+
+  @Produces
+  @RequestScoped
+  public ServiceIdentityRegistry serviceIdentityRegistry(
+      ServiceIdentityRegistryFactory serviceIdentityRegistryFactory, RealmContext realmContext) {
+    return serviceIdentityRegistryFactory.getOrCreateServiceIdentityRegistry(realmContext);
+  }
+
+  @Produces
+  @RequestScoped
+  public PolarisCredentialManager polarisCredentialManager(
+      PolarisCredentialManagerFactory polarisCredentialManagerFactory, RealmContext realmContext) {
+    return polarisCredentialManagerFactory.getOrCreatePolarisCredentialManager(realmContext);
   }
 
   public void closeTaskExecutor(@Disposes @Identifier("task-executor") ManagedExecutor executor) {

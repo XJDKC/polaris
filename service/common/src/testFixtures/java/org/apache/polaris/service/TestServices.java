@@ -37,10 +37,13 @@ import org.apache.polaris.core.auth.PolarisAuthorizer;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.PolarisCredentialManager;
+import org.apache.polaris.core.credentials.PolarisCredentialManagerFactory;
 import org.apache.polaris.core.entity.PolarisEntity;
 import org.apache.polaris.core.entity.PrincipalEntity;
 import org.apache.polaris.core.entity.transformation.EntityTransformationEngine;
 import org.apache.polaris.core.entity.transformation.NoOpEntityTransformationEngine;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistryFactory;
 import org.apache.polaris.core.persistence.BasePersistence;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.core.persistence.PolarisEntityManager;
@@ -61,8 +64,10 @@ import org.apache.polaris.service.config.RealmEntityManagerFactory;
 import org.apache.polaris.service.config.ReservedProperties;
 import org.apache.polaris.service.context.catalog.CallContextCatalogFactory;
 import org.apache.polaris.service.context.catalog.PolarisCallContextCatalogFactory;
+import org.apache.polaris.service.credentials.DefaultPolarisCredentialManagerFactory;
 import org.apache.polaris.service.events.PolarisEventListener;
 import org.apache.polaris.service.events.TestPolarisEventListener;
+import org.apache.polaris.service.identity.registry.DefaultServiceIdentityRegistryFactory;
 import org.apache.polaris.service.persistence.InMemoryPolarisMetaStoreManagerFactory;
 import org.apache.polaris.service.secrets.UnsafeInMemorySecretsManagerFactory;
 import org.apache.polaris.service.storage.PolarisStorageIntegrationProviderImpl;
@@ -166,6 +171,10 @@ public record TestServices(
           new RealmEntityManagerFactory(metaStoreManagerFactory) {};
       UserSecretsManagerFactory userSecretsManagerFactory =
           new UnsafeInMemorySecretsManagerFactory();
+      ServiceIdentityRegistryFactory serviceIdentityRegistryFactory =
+          new DefaultServiceIdentityRegistryFactory();
+      PolarisCredentialManagerFactory credentialManagerFactory =
+          new DefaultPolarisCredentialManagerFactory(serviceIdentityRegistryFactory);
 
       BasePersistence metaStoreSession =
           metaStoreManagerFactory.getOrCreateSessionSupplier(realmContext).get();
@@ -183,6 +192,8 @@ public record TestServices(
           metaStoreManagerFactory.getOrCreateMetaStoreManager(realmContext);
       UserSecretsManager userSecretsManager =
           userSecretsManagerFactory.getOrCreateUserSecretsManager(realmContext);
+      PolarisCredentialManager credentialManager =
+          credentialManagerFactory.getOrCreatePolarisCredentialManager(realmContext);
 
       FileIOFactory fileIOFactory =
           fileIOFactorySupplier.apply(
@@ -213,6 +224,7 @@ public record TestServices(
               entityManager,
               metaStoreManager,
               userSecretsManager,
+              credentialManager,
               authorizer,
               new DefaultCatalogPrefixParser(),
               reservedProperties,
