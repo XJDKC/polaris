@@ -58,6 +58,8 @@ import org.apache.polaris.core.auth.PolarisAuthorizerImpl;
 import org.apache.polaris.core.config.PolarisConfigurationStore;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.PolarisCredentialManager;
+import org.apache.polaris.core.credentials.PolarisCredentialManagerFactory;
 import org.apache.polaris.core.entity.CatalogEntity;
 import org.apache.polaris.core.entity.CatalogRoleEntity;
 import org.apache.polaris.core.entity.PolarisBaseEntity;
@@ -65,6 +67,8 @@ import org.apache.polaris.core.entity.PolarisEntityType;
 import org.apache.polaris.core.entity.PolarisPrivilege;
 import org.apache.polaris.core.entity.PrincipalEntity;
 import org.apache.polaris.core.entity.PrincipalRoleEntity;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistry;
+import org.apache.polaris.core.identity.registry.ServiceIdentityRegistryFactory;
 import org.apache.polaris.core.persistence.MetaStoreManagerFactory;
 import org.apache.polaris.core.persistence.PolarisEntityManager;
 import org.apache.polaris.core.persistence.PolarisMetaStoreManager;
@@ -185,6 +189,8 @@ public abstract class PolarisAuthzTestBase {
   @Inject protected RealmEntityManagerFactory realmEntityManagerFactory;
   @Inject protected CallContextCatalogFactory callContextCatalogFactory;
   @Inject protected UserSecretsManagerFactory userSecretsManagerFactory;
+  @Inject protected ServiceIdentityRegistryFactory serviceIdentityRegistryFactory;
+  @Inject protected PolarisCredentialManagerFactory credentialManagerFactory;
   @Inject protected PolarisDiagnostics diagServices;
   @Inject protected Clock clock;
   @Inject protected FileIOFactory fileIOFactory;
@@ -201,6 +207,8 @@ public abstract class PolarisAuthzTestBase {
   protected PolarisEntityManager entityManager;
   protected PolarisMetaStoreManager metaStoreManager;
   protected UserSecretsManager userSecretsManager;
+  protected ServiceIdentityRegistry serviceIdentityRegistry;
+  protected PolarisCredentialManager credentialManager;
   protected PolarisBaseEntity catalogEntity;
   protected PrincipalEntity principalEntity;
   protected CallContext callContext;
@@ -228,6 +236,9 @@ public abstract class PolarisAuthzTestBase {
     QuarkusMock.installMockForType(realmContext, RealmContext.class);
     metaStoreManager = managerFactory.getOrCreateMetaStoreManager(realmContext);
     userSecretsManager = userSecretsManagerFactory.getOrCreateUserSecretsManager(realmContext);
+    serviceIdentityRegistry =
+        serviceIdentityRegistryFactory.getOrCreateServiceIdentityRegistry(realmContext);
+    credentialManager = credentialManagerFactory.getOrCreatePolarisCredentialManager(realmContext);
 
     polarisAuthorizer = new PolarisAuthorizerImpl();
 
@@ -252,6 +263,7 @@ public abstract class PolarisAuthzTestBase {
             entityManager,
             metaStoreManager,
             userSecretsManager,
+            serviceIdentityRegistry,
             securityContext(authenticatedRoot, Set.of()),
             polarisAuthorizer,
             reservedProperties);
