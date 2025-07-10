@@ -44,7 +44,7 @@ public class ResolvedServiceIdentityTest {
 
     ServiceSecretReference identityInfoReference =
         new ServiceSecretReference(
-            "urn:polaris-service-secret:defualt-identity-registry:my-realm:aws-iam", Map.of());
+            "urn:polaris-secret:defualt-identity-registry:my-realm:aws-iam", Map.of());
     identity.setIdentityInfoReference(identityInfoReference);
     dpo = (AwsIamServiceIdentityInfoDpo) identity.asServiceIdentityInfoDpo();
     Assertions.assertThat(dpo.getIdentityInfoReference()).isEqualTo(identityInfoReference);

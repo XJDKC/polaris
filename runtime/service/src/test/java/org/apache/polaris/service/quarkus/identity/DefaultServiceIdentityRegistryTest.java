@@ -129,8 +129,7 @@ public class DefaultServiceIdentityRegistryTest {
     Assertions.assertThat(resolvedAwsIamServiceIdentity.getIdentityInfoReference())
         .isEqualTo(
             new ServiceSecretReference(
-                "urn:polaris-service-secret:default-identity-registry:system:default:AWS_IAM",
-                Map.of()));
+                "urn:polaris-secret:default-identity-registry:system:default:AWS_IAM", Map.of()));
     Assertions.assertThat(resolvedAwsIamServiceIdentity.getAccessKeyId()).isNull();
     Assertions.assertThat(resolvedAwsIamServiceIdentity.getSecretAccessKey()).isNull();
     Assertions.assertThat(resolvedAwsIamServiceIdentity.getSessionToken()).isNull();
@@ -152,7 +151,7 @@ public class DefaultServiceIdentityRegistryTest {
     Assertions.assertThat(resolvedAwsIamServiceIdentity.getIdentityInfoReference())
         .isEqualTo(
             new ServiceSecretReference(
-                "urn:polaris-service-secret:default-identity-registry:my-realm:AWS_IAM", Map.of()));
+                "urn:polaris-secret:default-identity-registry:my-realm:AWS_IAM", Map.of()));
     Assertions.assertThat(resolvedAwsIamServiceIdentity.getAccessKeyId())
         .isEqualTo("access-key-id");
     Assertions.assertThat(resolvedAwsIamServiceIdentity.getSecretAccessKey())

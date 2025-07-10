@@ -43,7 +43,7 @@ public class DefaultServiceIdentityRegistryFactory implements ServiceIdentityReg
   private static final String DEFAULT_REALM_KEY = ServiceIdentityConfiguration.DEFAULT_REALM_KEY;
   private static final String DEFAULT_REALM_NSS = "system:default";
   private static final String IDENTITY_INFO_REFERENCE_URN_FORMAT =
-      "urn:polaris-service-secret:default-identity-registry:%s:%s";
+      "urn:polaris-secret:default-identity-registry:%s:%s";
 
   private final Map<String, DefaultServiceIdentityRegistry> realmServiceIdentityRegistries;
 
